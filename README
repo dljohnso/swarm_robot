@@ -1,0 +1,9 @@
+﻿Installation
+1. Install gazebo.
+2. Install trollius.
+3. Install pygazebo.
+4. git clone https://github.com/dljohnso/swarm_robot.git
+
+Running
+1. Enter in a terminal: gazebo <folder of repo>/swarm_robot_world.sdf
+2. Enter in another terminal: python robot_controller.py
