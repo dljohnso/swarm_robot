@@ -3,11 +3,13 @@ from trollius import From
 
 import pygazebo
 import pygazebo.msg.joint_cmd_pb2
+from pygazebo.msg.poses_stamped_pb2 import PosesStamped
 
 def callback(data):
-    message = pygazebo.msg.pose_pb2.Pose(data)
+    message = PosesStamped.FromString(data)
+    print message.pose[0]
     
-
+    
 @trollius.coroutine
 def control_loop():
     manager = yield From(pygazebo.connect())
@@ -16,7 +18,7 @@ def control_loop():
         manager.advertise('/gazebo/default/husky_1/joint_cmd',
                           'gazebo.msgs.JointCmd'))
                           
-    manager.subscribe('/gazebo/default/pose/info', 'gazebo.msgs.Pose', callback)
+    manager.subscribe('/gazebo/default/pose/info', 'gazebo.msgs.PosesStamped', callback)
 
     left_wheel = pygazebo.msg.joint_cmd_pb2.JointCmd()
     left_wheel.name = 'husky_1::front_left_joint'
@@ -32,6 +34,7 @@ def control_loop():
         left_wheel.force = left_wheel.force + 0.005
         right_wheel.force = right_wheel.force + 0.005
         yield From(trollius.sleep(1.0))
+
 
 loop = trollius.get_event_loop()
 loop.run_until_complete(control_loop())
