@@ -1,43 +1,117 @@
+from math import sqrt
 import trollius
 from trollius import From
-
 import pygazebo
 import pygazebo.msg.joint_cmd_pb2
 from pygazebo.msg.poses_stamped_pb2 import PosesStamped
+from pygazebo.msg.world_stats_pb2 import WorldStatistics
+from pygazebo.msg.joint_cmd_pb2 import JointCmd
+from pygazebo.msg.world_control_pb2 import WorldControl
 
+sensor_input = 0
 def callback(data):
+    global sensor_input
     message = PosesStamped.FromString(data)
-    print message.pose[0]
+    sensor_input = message
     
+sim_time = 0
+def world_callback(data):
+    global sim_time
+    message = WorldStatistics.FromString(data)
+    sim_time = message.sim_time.sec
+    
+robot_location = 0
+goal_location = 0
+def location_callback(data):
+    global robot_location
+    global goal_location
+    message = PosesStamped.FromString(data)
+    if goal_location == 0:
+        for a_pose in message.pose:
+            if a_pose.name == "robocup_3d_goal":
+                goal_x = a_pose.position.x
+                goal_y = a_pose.position.y
+                goal_location = (goal_x, goal_y)
+            if a_pose.name == "husky_1":
+                x = a_pose.position.x
+                y = a_pose.position.y
+                robot_location = (x,y)
+    else:
+        for a_pose in message.pose:
+            if a_pose.name == "husky_1":
+                x = a_pose.position.x
+                y = a_pose.position.y
+                robot_location = (x,y)
+
+distance_to_goal = float("inf")
+def update_distance():
+    global distance_to_goal
+    if robot_location !=0 and goal_location != 0:
+        x_distance = robot_location[0] - goal_location[0]
+        y_distance = robot_location[1] - goal_location[1]
+        distance_to_goal = sqrt(x_distance**2 + y_distance**2)
+
+left_velocity = 0
+right_velocity = 0
     
 @trollius.coroutine
-def control_loop():
+def control_loop(driver, time_out):
     manager = yield From(pygazebo.connect())
-
-    publisher = yield From(
+    wheel_publisher = yield From(
         manager.advertise('/gazebo/default/husky_1/joint_cmd',
                           'gazebo.msgs.JointCmd'))
-                          
-    manager.subscribe('/gazebo/default/pose/info', 'gazebo.msgs.PosesStamped', callback)
+    world_subscriber = manager.subscribe('/gazebo/default/world_stats', 
+        'gazebo.msgs.WorldStatistics', world_callback)
+    world_publisher = yield From(manager.advertise('/gazebo/default/world_control',
+        'gazebo.msgs.WorldControl'))
+    location = manager.subscribe('/gazebo/default/pose/info', 'gazebo.msgs.PosesStamped', location_callback)
 
-    left_wheel = pygazebo.msg.joint_cmd_pb2.JointCmd()
+    left_wheel = JointCmd()
     left_wheel.name = 'husky_1::front_left_joint'
-    left_wheel.force = 0
-    
-    right_wheel = pygazebo.msg.joint_cmd_pb2.JointCmd()
+    right_wheel = JointCmd()
     right_wheel.name = 'husky_1::front_right_joint'
-    right_wheel.force = 0
+    
+    world_control = WorldControl()
+    world_control.pause = True
+    world_control.reset.all = True
+    yield From(trollius.sleep(0.01))
+    world_publisher.wait_for_listener()
+    yield From(world_publisher.publish(world_control))
+    
+    global sim_time
+    yield From(trollius.sleep(0.01))
+    start_time = sim_time
+    end_time = start_time + time_out
+    
+    world_control.pause = False
+    yield From(world_publisher.publish(world_control))
+    
+    global distance_to_goal
+    while (sim_time < end_time) and (distance_to_goal > 0.5):
+        (left,right) = driver(sensor_input)
+        left_wheel.velocity.target = left
+        right_wheel.velocity.target = right
+        yield From(wheel_publisher.publish(left_wheel))
+        yield From(wheel_publisher.publish(right_wheel))
+        update_distance()
+        if distance_to_goal < 0.5:
+            break
+        yield From(trollius.sleep(.01))
+    
+    world_control.pause = True
+    yield From(world_publisher.publish(world_control))
+    global left_velocity
+    global right_velocity
+    left_velocity = left_wheel.velocity.target
+    right_velocity = right_wheel.velocity.target
+    print left_velocity
+    print right_velocity
 
-    while True:
-        yield From(publisher.publish(left_wheel))
-        yield From(publisher.publish(right_wheel))
-        left_wheel.force = left_wheel.force + 0.005
-        right_wheel.force = right_wheel.force + 0.005
-        yield From(trollius.sleep(1.0))
 
-
-loop = trollius.get_event_loop()
-loop.run_until_complete(control_loop())
+def run(driver, time_out):
+    loop = trollius.get_event_loop()
+    loop.run_until_complete(control_loop(driver, time_out))
+    return (distance_to_goal, left_velocity, right_velocity)
 
 
 
