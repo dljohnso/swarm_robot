@@ -709,6 +709,10 @@
         </link>
       </model>
       <model name='husky'>
+      <include>
+            <uri>model://hokuyo</uri>
+            <pose>0.2 0 .3 0 0 0</pose>
+        </include>
         <pose frame=''>0.000199 0.087181 0.152755 -7e-06 4e-06 -0.007032</pose>
         <scale>1 1 1</scale>
         <link name='back_left_wheel'>
@@ -741,6 +745,7 @@
           <acceleration>-0.844158 0.189685 -7.33076 -0.919286 1.26672 -0.824723</acceleration>
           <wrench>-2.22495 0.499952 -19.3217 0 -0 0</wrench>
         </link>
+        
       </model>
       <model name='my_outer_wall3'>
         <pose frame=''>0.9219 0.063346 -1.5 0 -0 0</pose>
@@ -1919,6 +1924,10 @@
       <static>1</static>
     </model>
     <model name='husky'>
+    <include>
+            <uri>model://hokuyo</uri>
+            <pose>0.2 0 .3 0 0 0</pose>
+        </include>
       <pose frame=''>0.37691 -0.112405 0.5 0 -0 0</pose>
       <link name='base_link'>
         <collision name='collision'>
@@ -2380,6 +2389,17 @@
         <wheelDiameter>0.3555</wheelDiameter>
         <torque>35</torque>
       </plugin>
+      <joint name="laser_joint" type="revolute">
+        <parent>base_link</parent>
+        <child>hokuyo::link</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+          </limit>
+        </axis>
+      </joint>
     </model>
   </world>
 </sdf>
