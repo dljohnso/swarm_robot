@@ -7,3 +7,7 @@
 Running
 1. Enter in a terminal: gazebo <folder of repo>/swarm_robot_world.sdf
 2. Enter in another terminal: python robot_controller.py
+
+Paper to implement aco
+
+http://csus-dspace.calstate.edu/bitstream/handle/10211.9/2237/arun_aco_report_corrected_grad.pdf?sequence=1
