@@ -46,17 +46,32 @@ def location_callback(data):
                 y = a_pose.position.y
                 robot_location = (x,y)
 
+light_sensor1 = 0
 def light_1_callback(data):
+    global light_sensor1
     message = ImageStamped.FromString(data)
-   
+    raw_data = message.image.data
+    pixels = bytearray(raw_data)
+    light_sensor1 = sum(pixels)/len(pixels)
     
+light_sensor2 = 0
 def light_2_callback(data):
+    global light_sensor2
     message = ImageStamped.FromString(data)
+    raw_data = message.image.data
+    pixels = bytearray(raw_data)
+    light_sensor2 = sum(pixels)/len(pixels)
     
-
+collide = []
 def laser_callback(data):
+    global collide
+    collide = []
     message = LaserScanStamped.FromString(data)
-    print message
+    for r in message.scan.ranges:
+        if r == 'inf': out = 0
+        else: out = 1/r
+        collide.append(out)
+    
 
 distance_to_goal = float("inf")
 def update_distance():
@@ -68,7 +83,6 @@ def update_distance():
 
 left_velocity = 0
 right_velocity = 0
-
     
 @trollius.coroutine
 def control_loop(driver, time_out):
@@ -82,9 +96,9 @@ def control_loop(driver, time_out):
         'gazebo.msgs.WorldControl'))
     location = manager.subscribe('/gazebo/default/pose/info', 'gazebo.msgs.PosesStamped', location_callback)
     
-    light_sensor1 = manager.subscribe('/gazebo/default/husky/camera1/link/camera/image', 'gazebo.msgs.ImageStamped', light_1_callback)
-    light_sensor2 = manager.subscribe('/gazebo/default/husky/camera2/link/camera/image', 'gazebo.msgs.ImageStamped', light_2_callback)
-    laser = manager.subscribe('/gazebo/default/husky/hokuyo/link/laser/scan', 'gazebo.msgs.LaserScanStamped', laser_callback)
+    light_sensor1_subscriber = manager.subscribe('/gazebo/default/husky/camera1/link/camera/image', 'gazebo.msgs.ImageStamped', light_1_callback)
+    light_sensor2_subscriber = manager.subscribe('/gazebo/default/husky/camera2/link/camera/image', 'gazebo.msgs.ImageStamped', light_2_callback)
+    laser_subscriber = manager.subscribe('/gazebo/default/husky/hokuyo/link/laser/scan', 'gazebo.msgs.LaserScanStamped', laser_callback)
 
     left_wheel = JointCmd()
     left_wheel.name = 'husky_1::front_left_joint'
@@ -107,7 +121,14 @@ def control_loop(driver, time_out):
     yield From(world_publisher.publish(world_control))
     
     global distance_to_goal
+    global collide
+    global light_sensor1
+    global light_sensor2
     while (sim_time < end_time) and (distance_to_goal > 0.5):
+        sensor_input = [light_sensor1, light_sensor2]
+        yield From(trollius.sleep(.01))
+        sensor_input += collide
+        yield From(trollius.sleep(.01))
         (left,right) = driver(sensor_input)
         left_wheel.velocity.target = left
         right_wheel.velocity.target = right
@@ -124,8 +145,7 @@ def control_loop(driver, time_out):
     global right_velocity
     left_velocity = left_wheel.velocity.target
     right_velocity = right_wheel.velocity.target
-    print left_velocity
-    print right_velocity
+
 
 
 def run(driver, time_out):
