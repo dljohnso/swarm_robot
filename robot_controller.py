@@ -112,12 +112,11 @@ def control_loop(driver, time_out):
     
     world_control = WorldControl()
     world_control.pause = True
-    world_control.reset.all = False
-    world_control.reset.time_only = True
-    world_control.reset.model_only = True
+    world_control.reset.all = True
     yield From(trollius.sleep(0.01))
     world_publisher.wait_for_listener()
     yield From(world_publisher.publish(world_control))
+    world_control.reset.all = False
     
     global sim_time
     yield From(trollius.sleep(0.01))

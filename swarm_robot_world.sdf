@@ -694,10 +694,7 @@
       <pose frame=''>8.82633 -10.9618 0 0 -0 0</pose>
     </model>
     <state world_name='default'>
-      <sim_time>1653 393000000</sim_time>
-      <real_time>52 680911749</real_time>
-      <wall_time>1460756651 31396433</wall_time>
-      <iterations>52548</iterations>
+   
       <model name='ground_plane'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <scale>1 1 1</scale>
@@ -929,9 +926,7 @@
           <wrench>0 1e-06 -0 0 -0 0</wrench>
         </link>
       </model>
-      <light name='user_point_light_0'>
-        <pose frame=''>15 0 7 0 -0 0</pose>
-      </light>
+      
     </state>
     <gui fullscreen='0'>
       <camera name='user_camera'>
@@ -1059,19 +1054,20 @@
       <pose frame=''>0.01008 -0.020559 0 0 -0 0</pose>
     </model>
     <light name='user_point_light_0' type='point'>
-      <pose frame=''>15.0109 -0.016872 1 0 -0 0</pose>
+      <pose frame=''>15.0109 -0.016872 7 0 -0 0</pose>
       <diffuse>0.5 0.5 0.5 1</diffuse>
       <specular>0.1 0.1 0.1 1</specular>
       <attenuation>
         <range>20</range>
         <constant>0.5</constant>
         <linear>0.01</linear>
-        <quadratic>0.001</quadratic>
+        <quadratic>0.01</quadratic>
       </attenuation>
       <cast_shadows>0</cast_shadows>
       <direction>0 0 -1</direction>
     </light>
     <model name='my_outer_wall3'>
+     <scale>1 1 1</scale>
       <pose frame=''>0.921865 0.063346 0 0 -0 0</pose>
       <link name='Wall_62'>
         <collision name='Wall_62_Collision'>
