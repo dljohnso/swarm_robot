@@ -35,13 +35,13 @@ def location_callback(data):
                 goal_x = a_pose.position.x
                 goal_y = a_pose.position.y
                 goal_location = (goal_x, goal_y)
-            if a_pose.name == "husky_1":
+            if a_pose.name == "husky":
                 x = a_pose.position.x
                 y = a_pose.position.y
                 robot_location = (x,y)
     else:
         for a_pose in message.pose:
-            if a_pose.name == "husky_1":
+            if a_pose.name == "husky":
                 x = a_pose.position.x
                 y = a_pose.position.y
                 robot_location = (x,y)
@@ -88,7 +88,7 @@ right_velocity = 0
 def control_loop(driver, time_out):
     manager = yield From(pygazebo.connect())
     wheel_publisher = yield From(
-        manager.advertise('/gazebo/default/husky_1/joint_cmd',
+        manager.advertise('/gazebo/default/husky/joint_cmd',
                           'gazebo.msgs.JointCmd'))
     world_subscriber = manager.subscribe('/gazebo/default/world_stats', 
         'gazebo.msgs.WorldStatistics', world_callback)
@@ -101,13 +101,20 @@ def control_loop(driver, time_out):
     laser_subscriber = manager.subscribe('/gazebo/default/husky/hokuyo/link/laser/scan', 'gazebo.msgs.LaserScanStamped', laser_callback)
 
     left_wheel = JointCmd()
-    left_wheel.name = 'husky_1::front_left_joint'
+    left_wheel.name = 'husky::front_left_joint'
     right_wheel = JointCmd()
-    right_wheel.name = 'husky_1::front_right_joint'
+    right_wheel.name = 'husky::front_right_joint'
+    left_wheel.velocity.target = 0
+    right_wheel.velocity.target = 0
+    wheel_publisher.wait_for_listener()
+    yield From(wheel_publisher.publish(left_wheel))
+    yield From(wheel_publisher.publish(right_wheel))
     
     world_control = WorldControl()
     world_control.pause = True
-    world_control.reset.all = True
+    world_control.reset.all = False
+    world_control.reset.time_only = True
+    world_control.reset.model_only = True
     yield From(trollius.sleep(0.01))
     world_publisher.wait_for_listener()
     yield From(world_publisher.publish(world_control))

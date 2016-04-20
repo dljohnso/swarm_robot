@@ -708,53 +708,7 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
-      <model name='husky'>
-      <include>
-            <uri>model://hokuyo</uri>
-            <pose>0.2 0 .3 0 0 0</pose>
-        </include>
-        <include>
-        <uri>model://camera</uri>
-            <name>camera 1</name>
-      </include>
-      <include>
-        <uri>model://camera</uri>
-        <name>camera 2</name>
-      </include>
-        <pose frame=''>0.000199 0.087181 0.152755 -7e-06 4e-06 -0.007032</pose>
-        <scale>1 1 1</scale>
-        <link name='back_left_wheel'>
-          <pose frame=''>-0.253787 0.374448 0.187754 -3.6e-05 -0.17679 -0.007028</pose>
-          <velocity>-0.001014 0.000995 0.000189 -0.005466 -0.005334 0.001125</velocity>
-          <acceleration>-0.384257 0.544329 -1.13005 0.054623 -0.503842 1.36808</acceleration>
-          <wrench>-1.01279 1.43469 -2.97848 0 -0 0</wrench>
-        </link>
-        <link name='back_right_wheel'>
-          <pose frame=''>-0.257803 -0.196487 0.187757 -5e-06 -0.033423 -0.007032</pose>
-          <velocity>-0.000293 0.001092 0.002197 -0.003892 0.003886 0.001266</velocity>
-          <acceleration>-0.857203 0.642469 -5.03316 -1.26926 0.008921 -0.939666</acceleration>
-          <wrench>-2.25933 1.69335 -13.2659 0 -0 0</wrench>
-        </link>
-        <link name='base_link'>
-          <pose frame=''>0.000199 0.087181 0.152755 -7e-06 4e-06 -0.007032</pose>
-          <velocity>-0.0008 0.0013 0.000103 -0.003434 0.004186 0.001272</velocity>
-          <acceleration>0.221894 -0.449737 -3.82141 -2.7788 -0.986542 2.39273</acceleration>
-          <wrench>7.51224 -15.2258 -129.374 0 -0 0</wrench>
-        </link>
-        <link name='front_left_wheel'>
-          <pose frame=''>0.2582 0.370848 0.187752 -2.8e-05 0.273702 -0.007038</pose>
-          <velocity>-0.000994 0.002014 -0.001979 0.001615 -0.00296 0.000627</velocity>
-          <acceleration>-0.385953 0.779071 -3.22659 2.14886 -0.059316 -2.03919</acceleration>
-          <wrench>-1.01726 2.0534 -8.50432 0 -0 0</wrench>
-        </link>
-        <link name='front_right_wheel'>
-          <pose frame=''>0.254185 -0.200087 0.187756 -2e-06 0.0035 -0.007032</pose>
-          <velocity>-0.000288 0.00146 -3.7e-05 -0.008155 -0.001221 0.001236</velocity>
-          <acceleration>-0.844158 0.189685 -7.33076 -0.919286 1.26672 -0.824723</acceleration>
-          <wrench>-2.22495 0.499952 -19.3217 0 -0 0</wrench>
-        </link>
-        
-      </model>
+      
       <model name='my_outer_wall3'>
         <pose frame=''>0.9219 0.063346 -1.5 0 -0 0</pose>
         <scale>1 1 1</scale>
@@ -1934,17 +1888,17 @@
     <model name='husky'>
     <include>
             <uri>model://hokuyo</uri>
-            <pose>0.3 0 0.25 0 0 0</pose>
+            <pose frame=''>0.3 0 0.25 0 0 0</pose>
         </include>
         <include>
         <uri>model://camera</uri>
             <name>camera1</name>
-            <pose>0.3 -0.25 .3 0 0 0</pose>
+            <pose frame=''>0.3 -0.25 .3 0 0 0</pose>
       </include>
       <include>
         <uri>model://camera</uri>
         <name>camera2</name>
-        <pose>0.3 0.2 .3 0 0 0</pose>
+        <pose frame=''>0.3 0.2 .3 0 0 0</pose>
       </include>
       <pose frame=''>0.37691 -0.112405 0.5 0 -0 0</pose>
       <link name='base_link'>
@@ -2411,6 +2365,7 @@
         <parent>base_link</parent>
         <child>hokuyo::link</child>
         <axis>
+        <use_parent_model_frame>1</use_parent_model_frame>
           <xyz>0 0 1</xyz>
           <limit>
             <lower>0</lower>
@@ -2422,6 +2377,7 @@
         <parent>base_link</parent>
         <child>camera1::link</child>
         <axis>
+        <use_parent_model_frame>1</use_parent_model_frame>
           <xyz>0 0 1</xyz>
           <limit>
             <lower>0</lower>
@@ -2433,6 +2389,7 @@
         <parent>base_link</parent>
         <child>camera2::link</child>
         <axis>
+        <use_parent_model_frame>1</use_parent_model_frame>
           <xyz>0 0 1</xyz>
           <limit>
             <lower>0</lower>
