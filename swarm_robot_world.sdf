@@ -713,6 +713,14 @@
             <uri>model://hokuyo</uri>
             <pose>0.2 0 .3 0 0 0</pose>
         </include>
+        <include>
+        <uri>model://camera</uri>
+            <name>camera 1</name>
+      </include>
+      <include>
+        <uri>model://camera</uri>
+        <name>camera 2</name>
+      </include>
         <pose frame=''>0.000199 0.087181 0.152755 -7e-06 4e-06 -0.007032</pose>
         <scale>1 1 1</scale>
         <link name='back_left_wheel'>
@@ -1926,8 +1934,18 @@
     <model name='husky'>
     <include>
             <uri>model://hokuyo</uri>
-            <pose>0.2 0 .3 0 0 0</pose>
+            <pose>0.3 0 0.25 0 0 0</pose>
         </include>
+        <include>
+        <uri>model://camera</uri>
+            <name>camera1</name>
+            <pose>0.3 -0.25 .3 0 0 0</pose>
+      </include>
+      <include>
+        <uri>model://camera</uri>
+        <name>camera2</name>
+        <pose>0.3 0.2 .3 0 0 0</pose>
+      </include>
       <pose frame=''>0.37691 -0.112405 0.5 0 -0 0</pose>
       <link name='base_link'>
         <collision name='collision'>
@@ -2392,6 +2410,28 @@
       <joint name="laser_joint" type="revolute">
         <parent>base_link</parent>
         <child>hokuyo::link</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+          </limit>
+        </axis>
+      </joint>
+      <joint name="camera1_joint" type="revolute">
+        <parent>base_link</parent>
+        <child>camera1::link</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+          </limit>
+        </axis>
+      </joint>
+      <joint name="camera2_joint" type="revolute">
+        <parent>base_link</parent>
+        <child>camera2::link</child>
         <axis>
           <xyz>0 0 1</xyz>
           <limit>

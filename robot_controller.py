@@ -7,6 +7,9 @@ from pygazebo.msg.poses_stamped_pb2 import PosesStamped
 from pygazebo.msg.world_stats_pb2 import WorldStatistics
 from pygazebo.msg.joint_cmd_pb2 import JointCmd
 from pygazebo.msg.world_control_pb2 import WorldControl
+from pygazebo.msg.image_stamped_pb2 import ImageStamped
+from pygazebo.msg.laserscan_stamped_pb2 import LaserScanStamped
+
 
 sensor_input = 0
 def callback(data):
@@ -43,6 +46,18 @@ def location_callback(data):
                 y = a_pose.position.y
                 robot_location = (x,y)
 
+def light_1_callback(data):
+    message = ImageStamped.FromString(data)
+   
+    
+def light_2_callback(data):
+    message = ImageStamped.FromString(data)
+    
+
+def laser_callback(data):
+    message = LaserScanStamped.FromString(data)
+    print message
+
 distance_to_goal = float("inf")
 def update_distance():
     global distance_to_goal
@@ -53,6 +68,7 @@ def update_distance():
 
 left_velocity = 0
 right_velocity = 0
+
     
 @trollius.coroutine
 def control_loop(driver, time_out):
@@ -65,6 +81,10 @@ def control_loop(driver, time_out):
     world_publisher = yield From(manager.advertise('/gazebo/default/world_control',
         'gazebo.msgs.WorldControl'))
     location = manager.subscribe('/gazebo/default/pose/info', 'gazebo.msgs.PosesStamped', location_callback)
+    
+    light_sensor1 = manager.subscribe('/gazebo/default/husky/camera1/link/camera/image', 'gazebo.msgs.ImageStamped', light_1_callback)
+    light_sensor2 = manager.subscribe('/gazebo/default/husky/camera2/link/camera/image', 'gazebo.msgs.ImageStamped', light_2_callback)
+    laser = manager.subscribe('/gazebo/default/husky/hokuyo/link/laser/scan', 'gazebo.msgs.LaserScanStamped', laser_callback)
 
     left_wheel = JointCmd()
     left_wheel.name = 'husky_1::front_left_joint'
