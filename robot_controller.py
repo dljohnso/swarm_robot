@@ -76,6 +76,8 @@ def laser_callback(data):
 distance_to_goal = float("inf")
 def update_distance():
     global distance_to_goal
+    global robot_location
+    global goal_location
     if robot_location !=0 and goal_location != 0:
         x_distance = robot_location[0] - goal_location[0]
         y_distance = robot_location[1] - goal_location[1]
@@ -83,43 +85,41 @@ def update_distance():
 
 left_velocity = 0
 right_velocity = 0
-    
+finished = False    
 @trollius.coroutine
 def control_loop(driver, time_out):
     manager = yield From(pygazebo.connect())
-    wheel_publisher = yield From(
-        manager.advertise('/gazebo/default/husky/joint_cmd',
-                          'gazebo.msgs.JointCmd'))
-    world_subscriber = manager.subscribe('/gazebo/default/world_stats', 
-        'gazebo.msgs.WorldStatistics', world_callback)
-    world_publisher = yield From(manager.advertise('/gazebo/default/world_control',
-        'gazebo.msgs.WorldControl'))
-    location = manager.subscribe('/gazebo/default/pose/info', 'gazebo.msgs.PosesStamped', location_callback)
     
+    world_subscriber = manager.subscribe('/gazebo/default/world_stats', 'gazebo.msgs.WorldStatistics', world_callback)
+    location_subscriber = manager.subscribe('/gazebo/default/pose/info', 'gazebo.msgs.PosesStamped', location_callback)
     light_sensor1_subscriber = manager.subscribe('/gazebo/default/husky/camera1/link/camera/image', 'gazebo.msgs.ImageStamped', light_1_callback)
     light_sensor2_subscriber = manager.subscribe('/gazebo/default/husky/camera2/link/camera/image', 'gazebo.msgs.ImageStamped', light_2_callback)
     laser_subscriber = manager.subscribe('/gazebo/default/husky/hokuyo/link/laser/scan', 'gazebo.msgs.LaserScanStamped', laser_callback)
-
+    
+    world_publisher = yield From(manager.advertise('/gazebo/default/world_control','gazebo.msgs.WorldControl'))
+    world_publisher.wait_for_listener()
+    wheel_publisher = yield From(manager.advertise('/gazebo/default/husky/joint_cmd', 'gazebo.msgs.JointCmd'))
+    wheel_publisher.wait_for_listener()
+    
+    world_control = WorldControl()
+    world_control.pause = True
+    world_control.reset.all = True
+    yield From(trollius.sleep(0.01))
+    yield From(world_publisher.publish(world_control))
+    world_control.reset.all = False
+    
     left_wheel = JointCmd()
     left_wheel.name = 'husky::front_left_joint'
     right_wheel = JointCmd()
     right_wheel.name = 'husky::front_right_joint'
     left_wheel.velocity.target = 0
     right_wheel.velocity.target = 0
-    wheel_publisher.wait_for_listener()
+    yield From(trollius.sleep(0.01))
     yield From(wheel_publisher.publish(left_wheel))
     yield From(wheel_publisher.publish(right_wheel))
     
-    world_control = WorldControl()
-    world_control.pause = True
-    world_control.reset.all = True
     yield From(trollius.sleep(0.01))
-    world_publisher.wait_for_listener()
-    yield From(world_publisher.publish(world_control))
-    world_control.reset.all = False
-    
     global sim_time
-    yield From(trollius.sleep(0.01))
     start_time = sim_time
     end_time = start_time + time_out
     
@@ -130,11 +130,10 @@ def control_loop(driver, time_out):
     global collide
     global light_sensor1
     global light_sensor2
+    print "Starting control loop"
     while (sim_time < end_time) and (distance_to_goal > 0.5):
         sensor_input = [light_sensor1, light_sensor2]
-        yield From(trollius.sleep(.01))
         sensor_input += collide
-        yield From(trollius.sleep(.01))
         (left,right) = driver(sensor_input)
         left_wheel.velocity.target = left
         right_wheel.velocity.target = right
@@ -151,12 +150,25 @@ def control_loop(driver, time_out):
     global right_velocity
     left_velocity = left_wheel.velocity.target
     right_velocity = right_wheel.velocity.target
+    global finished
+    finished = True
+    
 
 
 
 def run(driver, time_out):
+    #try:
     loop = trollius.get_event_loop()
-    loop.run_until_complete(control_loop(driver, time_out))
+    #loop.call_soon(control_loop, driver, time_out, loop)
+    #try:
+    status = loop.run_until_complete(control_loop(driver, time_out))
+    #while(not status.done()): 
+        
+    #except AttributeError:
+    #   loop.close()
+    #    except RuntimeError:
+    global finished
+    while(not finished): pass
     return (distance_to_goal, left_velocity, right_velocity)
 
 

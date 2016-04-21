@@ -1067,7 +1067,6 @@
       <direction>0 0 -1</direction>
     </light>
     <model name='my_outer_wall3'>
-     <scale>1 1 1</scale>
       <pose frame=''>0.921865 0.063346 0 0 -0 0</pose>
       <link name='Wall_62'>
         <collision name='Wall_62_Collision'>
