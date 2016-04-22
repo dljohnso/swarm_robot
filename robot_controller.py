@@ -1,6 +1,6 @@
 from math import sqrt
 import trollius
-from trollius import From
+from trollius import From, new_event_loop, set_event_loop, ensure_future
 import pygazebo
 import pygazebo.msg.joint_cmd_pb2
 from pygazebo.msg.poses_stamped_pb2 import PosesStamped
@@ -87,15 +87,15 @@ left_velocity = 0
 right_velocity = 0
 finished = False    
 @trollius.coroutine
-def control_loop(driver, time_out):
+def control_loop(driver, time_out, loop):
     manager = yield From(pygazebo.connect())
-    
+    yield From(trollius.sleep(0.5))
     world_subscriber = manager.subscribe('/gazebo/default/world_stats', 'gazebo.msgs.WorldStatistics', world_callback)
     location_subscriber = manager.subscribe('/gazebo/default/pose/info', 'gazebo.msgs.PosesStamped', location_callback)
     light_sensor1_subscriber = manager.subscribe('/gazebo/default/husky/camera1/link/camera/image', 'gazebo.msgs.ImageStamped', light_1_callback)
     light_sensor2_subscriber = manager.subscribe('/gazebo/default/husky/camera2/link/camera/image', 'gazebo.msgs.ImageStamped', light_2_callback)
     laser_subscriber = manager.subscribe('/gazebo/default/husky/hokuyo/link/laser/scan', 'gazebo.msgs.LaserScanStamped', laser_callback)
-    
+    yield From(trollius.sleep(0.5))
     world_publisher = yield From(manager.advertise('/gazebo/default/world_control','gazebo.msgs.WorldControl'))
     world_publisher.wait_for_listener()
     wheel_publisher = yield From(manager.advertise('/gazebo/default/husky/joint_cmd', 'gazebo.msgs.JointCmd'))
@@ -106,7 +106,6 @@ def control_loop(driver, time_out):
     world_control.reset.all = True
     yield From(trollius.sleep(0.01))
     yield From(world_publisher.publish(world_control))
-    world_control.reset.all = False
     
     left_wheel = JointCmd()
     left_wheel.name = 'husky::front_left_joint'
@@ -118,13 +117,14 @@ def control_loop(driver, time_out):
     yield From(wheel_publisher.publish(left_wheel))
     yield From(wheel_publisher.publish(right_wheel))
     
+    world_control.pause = False
+    yield From(trollius.sleep(0.01))
+    yield From(world_publisher.publish(world_control))
+    
     yield From(trollius.sleep(0.01))
     global sim_time
     start_time = sim_time
     end_time = start_time + time_out
-    
-    world_control.pause = False
-    yield From(world_publisher.publish(world_control))
     
     global distance_to_goal
     global collide
@@ -144,31 +144,23 @@ def control_loop(driver, time_out):
             break
         yield From(trollius.sleep(.01))
     
+    yield From(trollius.sleep(0.01))
     world_control.pause = True
     yield From(world_publisher.publish(world_control))
+    
     global left_velocity
     global right_velocity
     left_velocity = left_wheel.velocity.target
     right_velocity = right_wheel.velocity.target
-    global finished
-    finished = True
+    loop.stop()
     
-
-
-
+    
 def run(driver, time_out):
-    #try:
-    loop = trollius.get_event_loop()
-    #loop.call_soon(control_loop, driver, time_out, loop)
-    #try:
-    status = loop.run_until_complete(control_loop(driver, time_out))
-    #while(not status.done()): 
-        
-    #except AttributeError:
-    #   loop.close()
-    #    except RuntimeError:
-    global finished
-    while(not finished): pass
+    loop = new_event_loop()
+    set_event_loop(loop)
+    ensure_future(control_loop(driver, time_out, loop))
+    loop.run_forever()
+    loop.close()
     return (distance_to_goal, left_velocity, right_velocity)
 
 
