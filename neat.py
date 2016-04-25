@@ -1,11 +1,29 @@
 import MultiNEAT as NEAT
 from robot_controller2 import RobotController
-params = NEAT.Parameters()
-params.PopulationSize = 100
+import numpy as np
 
-genome = NEAT.Genome(0, 643, 0, 2, False, NEAT.ActivationFunction.UNSIGNED_SIGMOID, NEAT.ActivationFunction.UNSIGNED_SIGMOID, 0, params)     
-pop = NEAT.Population(genome, params, True, 1.0, 0)
-pop.RNG.Seed(0)
+
+params = NEAT.Parameters()
+params.PopulationSize = 10
+params.MutateNeuronActivationTypeProb  = 0.1
+params.ActivationFunction_SignedSigmoid_Prob = 0.07
+params.ActivationFunction_UnsignedSigmoid_Prob = 0.07
+params.ActivationFunction_Tanh_Prob = 0.7
+params.ActivationFunction_TanhCubic_Prob = 0.07
+params.ActivationFunction_SignedStep_Prob = 0.07
+params.ActivationFunction_UnsignedStep_Prob = 0.07
+params.ActivationFunction_SignedGauss_Prob = 0.07
+params.ActivationFunction_UnsignedGauss_Prob = 0.07
+params.ActivationFunction_Abs_Prob = 0.07
+params.ActivationFunction_SignedSine_Prob = 0.07
+params.ActivationFunction_UnsignedSine_Prob = 0.07
+params.ActivationFunction_SignedSquare_Prob = 0.07
+params.ActivationFunction_UnsignedSquare_Prob = 0.07
+params.ActivationFunction_Linear_Prob = 0.07
+
+genome = NEAT.Genome(0, 643, 2, 2, True, NEAT.ActivationFunction.RELU, NEAT.ActivationFunction.LINEAR, 1, params)     
+pop = NEAT.Population(genome, params, True, 1.0, 1)
+#pop.RNG.Seed(1)
 
 
 def evaluate(genome):
@@ -18,17 +36,23 @@ def evaluate(genome):
     # let's input just one pattern to the net, activate it once and get the output
 
     def driver(sensor_input):
-        print sensor_input[1]
         sensor_input.append(1)
-        net.Input = sensor_input
+        #a = np.array(sensor_input)
+        net.Input(np.array(sensor_input))
         net.Activate()
         (left, right) = net.Output()
+        #print (left, right)
         return (left, right)
     
-    r = RobotController(True)
-    (fitness, _, _) = r.run(driver, 20)
-    return fitness
+    r = RobotController()
+    (fitness, _, _) = r.run(driver, 10)
+    return (40 - fitness)
     
-genome_list = NEAT.GetGenomeList(pop)
-fitness = evaluate(genome_list[33])
-print fitness
+for generation in range(5):
+    genome_list = NEAT.GetGenomeList(pop)
+    for genome in genome_list:
+        fitness = evaluate(genome)
+        print fitness
+        genome.SetFitness(fitness)
+    pop.Epoch()
+

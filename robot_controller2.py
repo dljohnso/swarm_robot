@@ -110,7 +110,7 @@ class RobotController:
         yield From(trollius.sleep(0.01))
         yield From(world_publisher.publish(world_control))
         
-        yield From(trollius.sleep(0.01))
+        yield From(trollius.sleep(0.5))
         start_time = self.sim_time
         end_time = start_time + time_out
         
